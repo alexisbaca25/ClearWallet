@@ -127,15 +127,25 @@ export default function UpcomingPayments({ payments }: UpcomingPaymentsProps) {
         </div>
 
         {/* Timeline */}
-        <div>
-          {sorted.map((payment, index) => (
-            <PaymentRow
-              key={payment.id}
-              payment={payment}
-              isLast={index === sorted.length - 1}
-            />
-          ))}
-        </div>
+        {sorted.length === 0 ? (
+          <div className="py-6 flex flex-col items-center gap-2 text-center">
+            <span className="text-3xl">✅</span>
+            <p className="text-white/30 text-sm">Sin pagos próximos</p>
+            <p className="text-white/15 text-xs">
+              Añade tarjetas de crédito para verlos aquí
+            </p>
+          </div>
+        ) : (
+          <div>
+            {sorted.map((payment, index) => (
+              <PaymentRow
+                key={payment.id}
+                payment={payment}
+                isLast={index === sorted.length - 1}
+              />
+            ))}
+          </div>
+        )}
       </GlassCard>
     </section>
   );

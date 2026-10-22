@@ -10,9 +10,9 @@ export interface WalletCard {
   lastFour: string;
   balance: number;
   creditLimit?: number;
-  cutoffDate: string;   // ISO date string
-  paymentDue: number;   // amount to pay this cycle
-  color: string;        // CSS gradient string
+  cutoffDate: string;
+  paymentDue: number;
+  color: string;
 }
 
 // ─── Transaction Types ────────────────────────────────────────────────────────
@@ -31,10 +31,10 @@ export type TransactionCategory =
 export interface Transaction {
   id: string;
   description: string;
-  amount: number;       // positive = income, negative = expense
+  amount: number;
   category: TransactionCategory;
-  date: string;         // ISO date string
-  icon: string;         // emoji icon
+  date: string;
+  icon: string;
 }
 
 // ─── Upcoming Payment Types ───────────────────────────────────────────────────
@@ -44,16 +44,69 @@ export interface UpcomingPayment {
   id: string;
   name: string;
   amount: number;
-  dueDate: string;      // ISO date string
+  dueDate: string;
   icon: string;
   cardName?: string;
 }
 
-// ─── Dashboard Summary ────────────────────────────────────────────────────────
-export interface BalanceSummary {
-  totalBalance: number;
-  dailyChange: number;       // absolute change
-  dailyChangePercent: number;
+// ─── Cuentas por cobrar (Presté dinero) ──────────────────────────────────────
+export interface Receivable {
+  id: string;
+  person: string;
+  amount: number;
+  date: string;
+  notes?: string;
+}
+
+// ─── Deudas informales (Debo dinero sin tarjeta) ─────────────────────────────
+export interface InformalDebt {
+  id: string;
+  person: string;
+  amount: number;
+  date: string;
+  notes?: string;
+}
+
+// ─── Movement (New Record Modal) ─────────────────────────────────────────────
+export type MovementType =
+  | "expense"
+  | "cash_income"
+  | "receivable"
+  | "informal_debt";
+
+interface BaseMovement {
+  amount: number;
+}
+export interface ExpenseMovement extends BaseMovement {
+  type: "expense";
+  concept: string;
+}
+export interface CashIncomeMovement extends BaseMovement {
+  type: "cash_income";
+  description: string;
+}
+export interface ReceivableMovement extends BaseMovement {
+  type: "receivable";
+  person: string;
+}
+export interface InformalDebtMovement extends BaseMovement {
+  type: "informal_debt";
+  person: string;
+}
+export type MovementData =
+  | ExpenseMovement
+  | CashIncomeMovement
+  | ReceivableMovement
+  | InformalDebtMovement;
+
+// ─── Dynamic Balance (computed from state) ───────────────────────────────────
+export interface DynamicBalance {
+  total: number;
+  cash: number;
+  totalReceivables: number;
+  totalCardDebt: number;
+  totalInformalDebts: number;
+  totalExpenses: number;
   monthlyIncome: number;
   monthlyExpenses: number;
 }

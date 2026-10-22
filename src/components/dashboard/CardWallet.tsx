@@ -2,6 +2,7 @@ import type { WalletCard } from "@/types";
 
 interface CardWalletProps {
   cards: WalletCard[];
+  onAddCard: () => void;
 }
 
 function formatCurrency(value: number): string {
@@ -16,7 +17,7 @@ function formatDate(iso: string): string {
   return new Intl.DateTimeFormat("es-MX", {
     day: "2-digit",
     month: "short",
-  }).format(new Date(iso));
+  }).format(new Date(iso + "T12:00:00")); // avoid timezone shift
 }
 
 function NetworkLogo({ network }: { network: WalletCard["network"] }) {
@@ -38,19 +39,11 @@ function NetworkLogo({ network }: { network: WalletCard["network"] }) {
   return <span className="text-white font-bold text-sm">AMEX</span>;
 }
 
-/**
- * Displays wallet cards in a responsive grid.
- * Each card has a gradient background, network logo, masked number,
- * balance, cut-off date and payment due.
- */
 function SingleCard({ card }: { card: WalletCard }) {
   const isCredit = card.type === "credit";
   const usagePercent =
     isCredit && card.creditLimit
-      ? Math.min(
-          100,
-          Math.round((Math.abs(card.balance) / card.creditLimit) * 100)
-        )
+      ? Math.min(100, Math.round((Math.abs(card.balance) / card.creditLimit) * 100))
       : 0;
 
   return (
@@ -64,26 +57,20 @@ function SingleCard({ card }: { card: WalletCard }) {
         "shadow-lg shadow-black/30",
       ].join(" ")}
     >
-      {/* Shimmer overlay */}
       <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none" />
 
-      {/* Top row */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <p className="text-white/50 text-xs uppercase tracking-widest">
-            {card.type}
-          </p>
+          <p className="text-white/50 text-xs uppercase tracking-widest">{card.type}</p>
           <p className="text-white font-semibold text-sm mt-0.5">{card.name}</p>
         </div>
         <NetworkLogo network={card.network} />
       </div>
 
-      {/* Card number */}
       <p className="text-white/70 font-mono text-sm tracking-[0.25em] mb-5">
         •••• •••• •••• {card.lastFour}
       </p>
 
-      {/* Balance */}
       <p className="text-white text-2xl font-bold mb-1">
         {isCredit ? "−" : ""}
         {formatCurrency(card.balance)}
@@ -92,7 +79,6 @@ function SingleCard({ card }: { card: WalletCard }) {
         {isCredit ? "Saldo utilizado" : "Saldo disponible"}
       </p>
 
-      {/* Credit usage bar */}
       {isCredit && card.creditLimit && (
         <div className="mb-4">
           <div className="flex justify-between text-xs text-white/40 mb-1">
@@ -103,11 +89,7 @@ function SingleCard({ card }: { card: WalletCard }) {
             <div
               className={[
                 "h-full rounded-full transition-all duration-700",
-                usagePercent > 80
-                  ? "bg-rose-400"
-                  : usagePercent > 50
-                    ? "bg-amber-400"
-                    : "bg-emerald-400",
+                usagePercent > 80 ? "bg-rose-400" : usagePercent > 50 ? "bg-amber-400" : "bg-emerald-400",
               ].join(" ")}
               style={{ width: `${usagePercent}%` }}
             />
@@ -115,13 +97,10 @@ function SingleCard({ card }: { card: WalletCard }) {
         </div>
       )}
 
-      {/* Footer */}
       <div className="flex justify-between items-center border-t border-white/10 pt-3">
         <div>
           <p className="text-white/30 text-xs">Corte</p>
-          <p className="text-white/80 text-xs font-medium">
-            {formatDate(card.cutoffDate)}
-          </p>
+          <p className="text-white/80 text-xs font-medium">{formatDate(card.cutoffDate)}</p>
         </div>
         {isCredit && card.paymentDue > 0 && (
           <div className="text-right">
@@ -137,19 +116,50 @@ function SingleCard({ card }: { card: WalletCard }) {
 }
 
 /**
- * Card wallet section — renders a responsive grid of wallet cards.
+ * Card wallet section — shows the card grid plus an "Add Card" button.
+ * When there are no cards, shows a prominent empty-state prompt.
  */
-export default function CardWallet({ cards }: CardWalletProps) {
+export default function CardWallet({ cards, onAddCard }: CardWalletProps) {
   return (
     <section className="animate-slide-up">
-      <h2 className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-4">
-        Mis Tarjetas
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {cards.map((card) => (
-          <SingleCard key={card.id} card={card} />
-        ))}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-white/60 text-xs font-semibold uppercase tracking-widest">
+          Mis Tarjetas
+        </h2>
+        <button
+          onClick={onAddCard}
+          className="flex items-center gap-1.5 text-xs font-medium text-violet-400 hover:text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/20 px-3 py-1.5 rounded-lg transition-all"
+        >
+          <span className="text-base leading-none">+</span>
+          Añadir tarjeta
+        </button>
       </div>
+
+      {cards.length === 0 ? (
+        /* Empty state */
+        <button
+          onClick={onAddCard}
+          className="w-full rounded-2xl border-2 border-dashed border-white/10 hover:border-violet-500/40 bg-white/[0.02] hover:bg-violet-500/[0.05] transition-all duration-300 py-14 flex flex-col items-center gap-3 group"
+        >
+          <div className="w-12 h-12 rounded-xl bg-white/[0.06] group-hover:bg-violet-500/15 flex items-center justify-center text-2xl transition-colors">
+            💳
+          </div>
+          <div>
+            <p className="text-white/50 text-sm font-medium group-hover:text-white/70 transition-colors">
+              No hay tarjetas registradas
+            </p>
+            <p className="text-white/25 text-xs mt-0.5">
+              Haz clic para añadir tu primera tarjeta
+            </p>
+          </div>
+        </button>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {cards.map((card) => (
+            <SingleCard key={card.id} card={card} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
